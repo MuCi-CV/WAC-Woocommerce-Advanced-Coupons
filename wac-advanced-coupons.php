@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name: Cupones Avanzados para WooCommerce
- * Plugin URI:  https://github.com/MuCi-CV/pagopar-woocommerce-gateway
+ * Plugin URI:  https://github.com/MuCi-CV/WAC-Woocommerce-Advanced-Coupons
  * Description: Extiende las funcionalidades de los cupones de WooCommerce con un sistema de saldo reutilizable.
- * Version:     1.0.0
+ * Version:     1.1.0
  * Author:      Carlos Vallory
  * Author URI:  https://github.com/MuCi-CV
  * License:     GPL-2.0+

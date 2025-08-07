@@ -27,26 +27,51 @@ if ( ! class_exists( 'WAC_Coupon_Balance_Manager' ) ) {
         }
 
         /**
-         * Apply discount for balance coupons.
+         * Aplica el descuento para cupones con saldo.
          *
-         * @param float      $discount
-         * @param float      $discounting_amount
-         * @param array      $cart_item
-         * @param bool       $single
-         * @param WC_Coupon  $coupon
-         * @return float The calculated discount.
+         * @param float     $discount          El valor del descuento inicial.
+         * @param float     $discounting_amount El monto total del carrito o del ítem que se está descontando.
+         * @param array     $cart_item         El ítem del carrito (si es por producto).
+         * @param bool      $single            Indica si el descuento es para un solo ítem.
+         * @param WC_Coupon $coupon            El objeto WC_Coupon.
+         * @return float El descuento calculado.
          */
         public function wac_apply_balance_coupon_discount( $discount, $discounting_amount, $cart_item, $single, $coupon ) {
             if ( 'wac_balance_coupon' === $coupon->get_discount_type() ) {
+                // Obtenemos el saldo actual del cupón.
                 $current_balance = (float) $coupon->get_meta( 'wac_current_balance' );
-                $cart_total      = WC()->cart->get_subtotal(); // Use get_subtotal() for a clean total before other discounts/taxes
+                
+                // Obtenemos el subtotal del carrito.
+                $cart_subtotal = (float) WC()->cart->get_cart_contents_total();
 
-                // If the cart total is less than the coupon balance, discount the cart total.
-                // Otherwise, discount up to the current balance.
-                $discount = min( $cart_total, $current_balance );
+                // El descuento a aplicar es el menor entre el subtotal del carrito y el saldo del cupón.
+                $discount_to_apply = min( $cart_subtotal, $current_balance );
 
-                return $discount;
+                // Para cupones de carrito fijo, es importante devolver el monto total del descuento.
+                // El filtro se ejecuta por cada artículo, por lo que usamos una variable estática
+                // para asegurarnos de que el descuento se aplique solo una vez y en su totalidad.
+                static $wac_total_discount_applied = 0;
+                
+                if ( $wac_total_discount_applied === 0 ) {
+                    $wac_total_discount_applied = $discount_to_apply;
+                }
+
+                // Devolvemos la parte del descuento que corresponde al artículo o al carrito.
+                // La lógica del core de WooCommerce se encarga de prorratear el descuento
+                // si es un cupón de "carrito fijo" y hay múltiples artículos.
+                // Solo necesitamos devolver el descuento total en el hook de "woocommerce_coupon_get_discount_amount".
+                
+                // Devuelve el descuento total si el cupón se aplica al total del carrito.
+                if ( ! $single ) {
+                    return $discount_to_apply;
+                }
+                
+                // Si el cupón se aplica a un solo ítem, prorratea el descuento.
+                if ( $cart_subtotal > 0 ) {
+                    return $discount_to_apply * ( $discounting_amount / $cart_subtotal );
+                }
             }
+
             return $discount;
         }
 
