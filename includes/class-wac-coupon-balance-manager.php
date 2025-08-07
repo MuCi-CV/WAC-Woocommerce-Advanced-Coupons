@@ -17,6 +17,7 @@ if ( ! class_exists( 'WAC_Coupon_Balance_Manager' ) ) {
         }
 
         public function __construct() {
+            add_filter( 'woocommerce_coupon_discount_types', array( $this, 'wac_register_custom_coupon_type' ) );
             //add_filter( 'woocommerce_coupon_get_discount_amount', array( $this, 'wac_apply_balance_coupon_discount' ), 10, 5 );
             add_filter( 'woocommerce_cart_coupon_discount_amount', array( $this, 'wac_cart_coupon_discount_amount' ), 10, 2 );
             add_action( 'woocommerce_order_status_completed', array( $this, 'wac_update_coupon_balance_after_order' ), 10, 1 ); // Use 'completed' instead of 'thankyou' for more reliable processing
@@ -25,6 +26,17 @@ if ( ! class_exists( 'WAC_Coupon_Balance_Manager' ) ) {
             add_action( 'woocommerce_checkout_update_order_review', array( $this, 'wac_validate_coupon_balance_on_checkout' ) );
             add_action( 'woocommerce_applied_coupon', array( $this, 'wac_validate_coupon_balance_on_apply' ) );
             add_filter( 'woocommerce_coupon_is_valid_for_cart', array( $this, 'wac_validate_balance_on_add_to_cart' ), 10, 2 );
+        }
+
+        /**
+         * Registra el tipo de cupón personalizado "Cupón con Saldo".
+         *
+         * @param array $discount_types
+         * @return array
+         */
+        public function wac_register_custom_coupon_type( $discount_types ) {
+            $discount_types['wac_balance_coupon'] = __( 'Cupón con Saldo', 'wac-advanced-coupons' );
+            return $discount_types;
         }
 
         /**
