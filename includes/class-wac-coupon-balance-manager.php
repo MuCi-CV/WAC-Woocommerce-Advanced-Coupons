@@ -17,7 +17,8 @@ if ( ! class_exists( 'WAC_Coupon_Balance_Manager' ) ) {
         }
 
         public function __construct() {
-            add_filter( 'woocommerce_coupon_get_discount_amount', array( $this, 'wac_apply_balance_coupon_discount' ), 10, 5 );
+            //add_filter( 'woocommerce_coupon_get_discount_amount', array( $this, 'wac_apply_balance_coupon_discount' ), 10, 5 );
+            add_filter( 'woocommerce_cart_coupon_discount_amount', array( $this, 'wac_cart_coupon_discount_amount' ), 10, 2 );
             add_action( 'woocommerce_order_status_completed', array( $this, 'wac_update_coupon_balance_after_order' ), 10, 1 ); // Use 'completed' instead of 'thankyou' for more reliable processing
             add_action( 'woocommerce_order_status_cancelled', array( $this, 'wac_restore_coupon_balance_on_cancellation' ), 10, 1 );
             add_action( 'woocommerce_order_status_refunded', array( $this, 'wac_restore_coupon_balance_on_refund' ), 10, 1 );
@@ -70,6 +71,28 @@ if ( ! class_exists( 'WAC_Coupon_Balance_Manager' ) ) {
                 if ( $cart_subtotal > 0 ) {
                     return $discount_to_apply * ( $discounting_amount / $cart_subtotal );
                 }
+            }
+
+            return $discount;
+        }
+
+        /**
+         * Modifica la cantidad del descuento del cupón en el carrito.
+         *
+         * @param float     $discount
+         * @param WC_Coupon $coupon
+         * @return float
+         */
+        public function wac_cart_coupon_discount_amount( $discount, $coupon ) {
+            if ( 'wac_balance_coupon' === $coupon->get_discount_type() ) {
+                // Obtener el saldo actual del cupón.
+                $current_balance = (float) $coupon->get_meta( 'wac_current_balance' );
+                
+                // Obtener el subtotal del carrito.
+                $cart_subtotal = (float) WC()->cart->get_cart_contents_total();
+
+                // El descuento a aplicar es el menor entre el subtotal del carrito y el saldo del cupón.
+                $discount = min( $cart_subtotal, $current_balance );
             }
 
             return $discount;
